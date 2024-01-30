@@ -8,16 +8,18 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import io.flutter.view.FlutterMain
+import io.flutter.FlutterInjector
 
 
 class GeofencingBroadcastReceiver : BroadcastReceiver() {
     companion object {
-        private const val TAG = "GeofencingBroadcastReceiver"
+        private const val TAG = "GeoReceiver"
     }
     override fun onReceive(context: Context, intent: Intent) {
-        FlutterMain.startInitialization(context)
-        FlutterMain.ensureInitializationComplete(context, null)
+        Log.d(TAG,"RECEIVED GEOFENCE EVENT")
+        val loader = FlutterInjector.instance().flutterLoader()
+        loader.startInitialization(context)
+        loader.ensureInitializationComplete(context, null)
         GeofencingService.enqueueWork(context, intent)
     }
 }
