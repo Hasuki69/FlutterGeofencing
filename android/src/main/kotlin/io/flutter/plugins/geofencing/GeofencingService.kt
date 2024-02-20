@@ -18,6 +18,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.FlutterCallbackInformation
 import java.util.ArrayDeque
 import java.util.UUID
@@ -38,7 +39,8 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         @JvmStatic
         private val sServiceStarted = AtomicBoolean(false)
 
-
+        @JvmStatic
+        private lateinit var sPluginRegistrantCallback: PluginRegistry.PluginRegistrantCallback
 
         @JvmStatic
         fun enqueueWork(context: Context, work: Intent) {
@@ -46,7 +48,10 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
             enqueueWork(context, GeofencingService::class.java, JOB_ID, work)
         }
 
-
+        @JvmStatic
+        fun setPluginRegistrant(callback: PluginRegistry.PluginRegistrantCallback) {
+            sPluginRegistrantCallback = callback
+        }
     }
 
     private fun startGeofencingService(context: Context) {
