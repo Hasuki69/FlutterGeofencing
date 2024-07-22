@@ -34,7 +34,6 @@ int geofenceEventToInt(GeofenceEvent e) {
   }
 }
 
-// TODO(bkonyi): handle event masks
 // Internal.
 GeofenceEvent intToGeofenceEvent(int e) {
   switch (e) {
@@ -81,15 +80,8 @@ class GeofenceRegion {
   ) : location = Location(latitude, longitude);
 
   List<dynamic> _toArgs() {
-    final int triggerMask = triggers.fold(
-        0, (int trigger, GeofenceEvent e) => (geofenceEventToInt(e) | trigger));
-    final List<dynamic> args = <dynamic>[
-      id,
-      location.latitude,
-      location.longitude,
-      radius,
-      triggerMask
-    ];
+    final int triggerMask = triggers.fold(0, (int trigger, GeofenceEvent e) => (geofenceEventToInt(e) | trigger));
+    final List<dynamic> args = <dynamic>[id, location.latitude, location.longitude, radius, triggerMask];
     if (Platform.isAndroid) {
       args.addAll(platformSettingsToArgs(androidSettings));
     }
@@ -98,20 +90,16 @@ class GeofenceRegion {
 }
 
 class GeofencingManager {
-  static const MethodChannel _channel =
-      MethodChannel('plugins.flutter.io/geofencing_plugin');
-  static const MethodChannel _background =
-      MethodChannel('plugins.flutter.io/geofencing_plugin_background');
+  static const MethodChannel _channel = MethodChannel('plugins.flutter.io/geofencing_plugin');
+  static const MethodChannel _background = MethodChannel('plugins.flutter.io/geofencing_plugin_background');
 
   /// Initialize the plugin and request relevant permissions from the user.
   static Future<void> initialize() async {
-    final CallbackHandle? callback =
-        PluginUtilities.getCallbackHandle(callbackDispatcher);
+    final CallbackHandle? callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
     if (callback == null) {
       throw Exception("Callback is needed");
     } else
-      await _channel.invokeMethod('GeofencingPlugin.initializeService',
-          <dynamic>[callback.toRawHandle()]);
+      await _channel.invokeMethod('GeofencingPlugin.initializeService', <dynamic>[callback.toRawHandle()]);
   }
 
   /// Promote the geofencing service to a foreground service.
@@ -139,32 +127,24 @@ class GeofencingManager {
   /// `GeofenceRegion` provided only requests notifications for a
   /// `GeofenceEvent.dwell` trigger on iOS, `UnsupportedError` is thrown.
   static Future<void> registerGeofence(
-      GeofenceRegion region,
-      void Function(List<String> id, Location location, GeofenceEvent event)
-          callback) async {
-    if (Platform.isIOS &&
-        region.triggers.contains(GeofenceEvent.dwell) &&
-        (region.triggers.length == 1)) {
+      GeofenceRegion region, void Function(List<String> id, Location location, GeofenceEvent event) callback) async {
+    if (Platform.isIOS && region.triggers.contains(GeofenceEvent.dwell) && (region.triggers.length == 1)) {
       throw UnsupportedError("iOS does not support 'GeofenceEvent.dwell'");
     }
-    final List<dynamic> args = <dynamic>[
-      PluginUtilities.getCallbackHandle(callback)!.toRawHandle()
-    ];
+    final List<dynamic> args = <dynamic>[PluginUtilities.getCallbackHandle(callback)!.toRawHandle()];
     args.addAll(region._toArgs());
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
   }
 
   /// get all geofence identifiers
   static Future<List<String>> getRegisteredGeofenceIds() async =>
-      List<String>.from(await _channel
-          .invokeMethod('GeofencingPlugin.getRegisteredGeofenceIds'));
+      List<String>.from(await _channel.invokeMethod('GeofencingPlugin.getRegisteredGeofenceIds'));
 
   /// Stop receiving geofence events for a given [GeofenceRegion].
-  static Future<bool> removeGeofence(GeofenceRegion region) async =>
-      await removeGeofenceById(region.id);
+  static Future<bool> removeGeofence(GeofenceRegion region) async => await removeGeofenceById(region.id);
 
   /// Stop receiving geofence events for an identifier associated with a
   /// geofence region.
-  static Future<bool> removeGeofenceById(String id) async => await _channel
-      .invokeMethod('GeofencingPlugin.removeGeofence', <dynamic>[id]);
+  static Future<bool> removeGeofenceById(String id) async =>
+      await _channel.invokeMethod('GeofencingPlugin.removeGeofence', <dynamic>[id]);
 }
